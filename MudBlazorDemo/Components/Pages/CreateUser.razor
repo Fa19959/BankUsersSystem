@@ -1,0 +1,133 @@
+﻿@page "/CreateUser"
+@inject IUserService service
+@inject IEmailService email
+@inject ISnackbar snack
+@inject ILogger<CreateUser> _Logger
+
+<MudSnackbarProvider />
+
+@using System.ComponentModel.DataAnnotations
+
+
+
+<EditForm Model="@user" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <MudGrid>
+
+
+        <MudItem xs="12" sm="8">
+            <MudCard>
+
+                <MudCardContent>
+
+                    <MudTextField Label="First name" HelperText="Max. 8 characters"
+                                  @bind-Value="user.FirstName" For="@(() => user.FirstName)" />
+
+                    <MudTextField Label="Last Name" Class="mt-3" HelperText="Min. 5 characters"
+                                  @bind-Value="user.LastName" For="@(() => user.LastName)" />
+
+                    <MudTextField Label="Email"  Class="mt-3"
+                                  @bind-Value="user.Email" InputType="InputType.Email" />
+                    
+                    <MudDatePicker Label="Birth Date"  Class="mt-3"
+                                   @bind-Value="user.BirthDate"  />
+
+                    <MudNumericField Label="Age" Class="mt-5"
+                                     @bind-Value="user.Age"  For="@(() => user.Age)"/>
+
+                    <MudTextField Label="Address" Class="mt-3" 
+                                  @bind-Value="user.Address"  />
+                   
+                    <MudText Typo="Typo.body1" Class="mt-5 mb-1">Gender</MudText>
+                    <MudRadioGroup @bind-Value="user.Gender">
+                        <MudRadio Value='"male"' Color="Color.Primary" Dense="true">Male</MudRadio>
+                        <MudRadio Value='"false"' Color="Color.Secondary" Dense="false">Female</MudRadio>
+                    </MudRadioGroup>
+
+                    <MudTextField Label="Phone" Class="mt-3"
+                                  @bind-Value="user.PhoneNumber" For="@(() => user.PhoneNumber)"
+                                  Placeholder="+968" Immediate="true" />
+
+                    <MudTextField Label="SSN" Class="mt-3 mb-5"
+                                  @bind-Value="user.SSN" />
+
+
+                    <MudText Typo="Typo.body1" Class="mt-5 mb-1">Upload Photo</MudText>
+                    <InputFile OnChange="UploadImage" accept="image/*"/>
+                    @if (uploadSuccess)
+                    {
+                        <p>Image uploaded successfully!</p>
+                    }
+
+                </MudCardContent>
+
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Register</MudButton>
+                </MudCardActions>
+
+            </MudCard>
+
+        </MudItem>
+
+
+    </MudGrid>
+</EditForm>
+
+
+
+@code {
+    UserDTO user = new UserDTO();
+    bool uploadSuccess;
+
+
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        ShowTestSnackbar();
+
+        int result = await service.AddUser(new () { UserName = $"{user.FirstName + user.LastName}",
+                                 Address = user.Address,
+                                 Contact= user.PhoneNumber,
+                                 SSN = user.SSN },  user.Image);
+        if (result == 1)
+        {
+            ShowSuccessSnackbar();
+            SendConfirmationEmail(user.Email);
+            _Logger.LogInformation("User Added and confirmed by email");
+            user = new();
+        }
+        else
+        {
+            ShowFailSnackbar(); 
+        }
+    }
+
+
+
+    private void UploadImage(InputFileChangeEventArgs attachments)
+    {
+        user.Image = attachments.File;
+    }
+
+    private void ShowSuccessSnackbar()
+    {
+        snack.Add("User Added Successfully", Severity.Success);
+    }
+
+    private void ShowFailSnackbar()
+    {
+        snack.Add("User Failed to add", Severity.Error);
+    }
+
+
+    private void ShowTestSnackbar()
+    {
+        snack.Add("start adding user ", Severity.Info);
+    }
+
+    private void SendConfirmationEmail(String mail)
+    {
+        email.SendEmailAsync(mail, "Registration Confirmation", $"Congratulations {user.FirstName} your account registered successfully");
+    }
+
+}

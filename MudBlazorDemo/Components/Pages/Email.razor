@@ -1,0 +1,49 @@
+﻿@page "/email"
+@rendermode InteractiveServer
+@inject IEmailService email
+
+<PageTitle>Email Sending</PageTitle>
+
+<h1>Email Sender</h1>
+
+<EditForm Model="@p" OnValidSubmit="OnValidSubmit">
+    <MudGrid>
+
+
+        <MudItem xs="12" sm="8">
+            <MudCard>
+
+                <MudCardContent>
+
+                    <MudTextField Label="Email " HelperText="Max. 8 characters"
+                                  @bind-Value="p.email" />
+                </MudCardContent>
+
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Send Mail</MudButton>
+                </MudCardActions>
+
+            </MudCard>
+
+        </MudItem>
+
+
+    </MudGrid>
+</EditForm>
+
+
+@code {
+
+    person p = new person();
+   
+    private void OnValidSubmit()
+    {
+        email.SendEmailAsync(p.email, "Registration Confirmation", "Congratulations your account registered successfully");
+    }
+
+
+    public class person
+    {
+       public string email{ get; set; }
+    }
+}
